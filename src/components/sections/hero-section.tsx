@@ -2,11 +2,10 @@
 
 import { Button } from "@/components/ui/button";
 import Image from "next/image";
-import { useRegistration } from "@/context/registration-context";
+import { useRouter } from "next/navigation";
 
 export function HeroSection() {
-  const { openDialog } = useRegistration();
-
+  const router = useRouter();
   return (
     <section className="relative bg-blue-600 text-white py-16 px-4 overflow-hidden">
       {/* Background Elements */}
@@ -41,7 +40,7 @@ export function HeroSection() {
               <Button
                 size="lg"
                 className="bg-white text-blue-600 hover:bg-blue-50 px-6 py-6 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all duration-300"
-                onClick={openDialog}
+                onClick={() => router.push("/register")}
               >
                 Register Now
               </Button>

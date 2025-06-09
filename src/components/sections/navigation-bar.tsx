@@ -3,19 +3,18 @@
 import { useState } from "react";
 import { Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useRegistration } from "@/context/registration-context";
 import Image from "next/image";
+import Link from "next/link";
 
 export function NavigationBar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const { openDialog } = useRegistration();
 
   return (
     <>
       <nav className="sticky top-0 w-full bg-white/95 backdrop-blur-sm z-50 border-b shadow-sm transition-all duration-300">
         <div className="container mx-auto px-4 py-4 md:py-3">
           <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-3">
+            <Link href="/" className="flex items-center space-x-3">
               <Image src="/sutra.png" alt="SUTRA" width={40} height={40} />
               <div>
                 <span className="font-bold text-xl tracking-tight">SUTRA</span>
@@ -23,10 +22,10 @@ export function NavigationBar() {
                   HACKATHON
                 </span>
               </div>
-            </div>
+            </Link>
 
             {/* Desktop Navigation */}
-            <div className="hidden md:flex items-center space-x-8">
+            <div className="hidden md:flex md:items-center md:space-x-8">
               <a
                 href="#overview"
                 className="text-gray-600 hover:text-blue-600 transition-colors font-medium"
@@ -57,12 +56,11 @@ export function NavigationBar() {
               >
                 Resources
               </a>
-              <Button
-                onClick={openDialog}
-                className="bg-gradient-to-r from-blue-600 to-violet-600 hover:from-blue-700 hover:to-violet-700 shadow-md hover:shadow-lg transition-all duration-300 rounded-lg"
-              >
-                Register Now
-              </Button>
+              <Link href="/register">
+                <Button className="bg-gradient-to-r from-blue-600 to-violet-600 hover:from-blue-700 hover:to-violet-700 shadow-md hover:shadow-lg transition-all duration-300 rounded-lg">
+                  Register Now
+                </Button>
+              </Link>
             </div>
 
             {/* Mobile Menu Button */}
@@ -118,12 +116,11 @@ export function NavigationBar() {
               >
                 Resources
               </a>
-              <Button
-                onClick={openDialog}
-                className="w-full bg-gradient-to-r from-blue-600 to-violet-600 hover:from-blue-700 hover:to-violet-700 mt-2"
-              >
-                Register Now
-              </Button>
+              <Link href="/register">
+                <Button className="w-full bg-gradient-to-r from-blue-600 to-violet-600 hover:from-blue-700 hover:to-violet-700 mt-2">
+                  Register Now
+                </Button>
+              </Link>
             </div>
           )}
         </div>

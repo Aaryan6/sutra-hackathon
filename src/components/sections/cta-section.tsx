@@ -2,11 +2,9 @@
 
 import { Calendar, Rocket, Trophy, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useRegistration } from "@/context/registration-context";
+import Link from "next/link";
 
 export function CtaSection() {
-  const { openDialog } = useRegistration();
-
   return (
     <section className="py-16 bg-gradient-to-br from-blue-900 via-indigo-900 to-purple-900 text-white relative overflow-hidden">
       {/* Background Elements */}
@@ -41,13 +39,14 @@ export function CtaSection() {
         </p>
 
         <div className="flex flex-col sm:flex-row gap-4 justify-center mb-8">
-          <Button
-            size="lg"
-            className="bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white px-6 py-3 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all duration-300 border-0"
-            onClick={openDialog}
-          >
-            Register Now
-          </Button>
+          <Link href="/register">
+            <Button
+              size="lg"
+              className="bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white px-6 py-3 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all duration-300 border-0"
+            >
+              Register Now
+            </Button>
+          </Link>
           <Button
             size="lg"
             variant="outline"

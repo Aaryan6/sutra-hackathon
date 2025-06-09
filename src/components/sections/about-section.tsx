@@ -2,11 +2,10 @@
 
 import { ArrowRight, Rocket, SparkleIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useRegistration } from "@/context/registration-context";
+import { useRouter } from "next/navigation";
 
 export function AboutSection() {
-  const { openDialog } = useRegistration();
-
+  const router = useRouter();
   return (
     <section
       id="overview"
@@ -67,7 +66,7 @@ export function AboutSection() {
             <div className="mt-8 flex flex-col sm:flex-row gap-4">
               <Button
                 className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-md hover:shadow-lg transition-all duration-300 px-6 py-6 rounded-xl group"
-                onClick={openDialog}
+                onClick={() => router.push("/register")}
               >
                 <span>Get Started</span>
                 <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />

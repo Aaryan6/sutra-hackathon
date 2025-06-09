@@ -11,10 +11,10 @@ import {
   Sparkles,
   Stethoscope,
 } from "lucide-react";
-import { useRegistration } from "@/context/registration-context";
+import { useRouter } from "next/navigation";
 
 export function FocusAreasSection() {
-  const { openDialog } = useRegistration();
+  const router = useRouter();
   const focusAreas = [
     {
       icon: BookOpen,
@@ -114,7 +114,7 @@ export function FocusAreasSection() {
             </p>
             <Button
               className="bg-white text-blue-600 hover:bg-blue-50 transition-all duration-300 group"
-              onClick={openDialog}
+              onClick={() => router.push("/register")}
             >
               <span>Submit Your Idea</span>
               <Sparkles className="ml-2 h-4 w-4 opacity-0 group-hover:opacity-100 transition-all duration-300" />
