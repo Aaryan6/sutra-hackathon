@@ -1,7 +1,12 @@
+"use client";
+
 import { Calendar, Rocket, Trophy, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useRegistration } from "@/context/registration-context";
 
 export function CtaSection() {
+  const { openDialog } = useRegistration();
+
   return (
     <section className="py-20 bg-gradient-to-br from-blue-900 via-purple-900 to-blue-800 text-white relative overflow-hidden">
       {/* Background Elements */}
@@ -24,10 +29,11 @@ export function CtaSection() {
           accessible in every language.
         </p>
 
-        <div className="flex flex-col sm:flex-row gap-4 justify-center">
+        <div className="flex flex-col sm:flex-row gap-4 justify-center mb-8">
           <Button
             size="lg"
             className="bg-white text-blue-900 hover:bg-blue-50 px-6 py-4 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all duration-300"
+            onClick={openDialog}
           >
             Register Now
           </Button>
@@ -35,6 +41,11 @@ export function CtaSection() {
             size="lg"
             variant="outline"
             className="border-2 border-white bg-transparent hover:text-white text-white hover:bg-white/10 px-6 py-4 rounded-xl font-semibold backdrop-blur-sm transition-all duration-300"
+            onClick={() => {
+              document
+                .getElementById("overview")
+                ?.scrollIntoView({ behavior: "smooth" });
+            }}
           >
             Learn More
           </Button>
