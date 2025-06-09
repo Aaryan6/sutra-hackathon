@@ -14,7 +14,7 @@ export const mainPrizes = [
   },
   {
     id: 2,
-    title: "Phone/Tablet",
+    title: "Tablet",
     description: "For the second-place team with exceptional implementation",
     icon: "Gift",
     rank: "2nd Prize",
@@ -61,6 +61,6 @@ export const additionalBenefits = [
     id: 4,
     title: "Additional Perks",
     description: "Certificate of participation for all teams",
-    icon: "Award",
+    icon: "Zap",
   },
 ];
