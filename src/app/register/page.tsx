@@ -15,16 +15,85 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
+import {
+  generateCardsForTeam,
+  downloadCard,
+  type TeamMember,
+} from "@/lib/card-generator";
+import { useRouter } from "next/navigation";
+
+interface FormData {
+  teamName: string;
+  teamLeaderName: string;
+  teamLeaderEmail: string;
+  contactNumber: string;
+  university: string;
+  members: TeamMember[];
+  focusArea: string;
+  problemStatement: string;
+  commitment: string;
+  termsAccepted: boolean;
+}
 
 export default function RegistrationPage() {
+  const router = useRouter();
   const [memberCount, setMemberCount] = useState(1);
   const [currentStep, setCurrentStep] = useState(1);
-  const totalSteps = 4;
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [generatedCards, setGeneratedCards] = useState<
+    { member: TeamMember; cardDataURL: string }[]
+  >([]);
+  const [showCards, setShowCards] = useState(false);
+  const totalSteps = 5;
+
+  const [formData, setFormData] = useState<FormData>({
+    teamName: "",
+    teamLeaderName: "",
+    teamLeaderEmail: "",
+    contactNumber: "",
+    university: "",
+    members: Array(4)
+      .fill(null)
+      .map(() => ({
+        firstName: "",
+        lastName: "",
+        email: "",
+        phone: "",
+      })),
+    focusArea: "",
+    problemStatement: "",
+    commitment: "",
+    termsAccepted: false,
+  });
 
   const handleAddMember = () => {
     if (memberCount < 4) {
       setMemberCount(memberCount + 1);
     }
+  };
+
+  const updateFormData = (field: keyof FormData, value: string | boolean) => {
+    setFormData((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const updateMemberData = (
+    index: number,
+    field: keyof TeamMember,
+    value: string
+  ) => {
+    setFormData((prev) => ({
+      ...prev,
+      members: prev.members.map((member, i) =>
+        i === index ? { ...member, [field]: value } : member
+      ),
+    }));
+  };
+
+  const downloadAllCards = () => {
+    generatedCards.forEach(({ member, cardDataURL }) => {
+      const fileName = `${member.firstName}_${member.lastName}_hackathon_card.png`;
+      downloadCard(cardDataURL, fileName);
+    });
   };
 
   const nextStep = () => {
@@ -41,8 +110,67 @@ export default function RegistrationPage() {
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    // This prevents the form from submitting when pressing Enter or clicking continue buttons
+    return;
+  };
+
+  const handleFinalSubmit = async () => {
+    console.log("Final form submission!");
+    console.log("Form data:", JSON.stringify(formData, null, 2));
+    console.log("Member count:", memberCount);
+
+    if (!formData.termsAccepted) {
+      alert("Please accept the terms and conditions to continue.");
+      return;
+    }
+
+    setIsSubmitting(true);
+    console.log("Starting card generation...");
+
+    try {
+      // Collect only team members from Step 2 (NOT the team leader)
+      const teamMembers = formData.members
+        .slice(0, memberCount) // Only take as many as memberCount
+        .filter(
+          (member) =>
+            member.firstName &&
+            member.firstName.trim() &&
+            member.lastName &&
+            member.lastName.trim()
+        );
+
+      console.log("Team members for cards:", teamMembers);
+      console.log("Member count:", memberCount);
+
+      if (teamMembers.length === 0) {
+        alert(
+          "No team members found to generate cards for. Please add team members in Step 2."
+        );
+        setIsSubmitting(false);
+        return;
+      }
+
+      console.log("Team members for card generation:", teamMembers);
+
+      // Generate cards for team members only
+      const cards = await generateCardsForTeam(teamMembers, {
+        font: "Poppins",
+        backgroundImage: "/sutra-river.jpg",
+      });
+
+      console.log("Generated cards:", cards);
+      setGeneratedCards(cards);
+      setShowCards(true);
+      setCurrentStep(5); // Move to card display step
+      console.log("Moved to step 5, showCards:", true);
+    } catch (error) {
+      console.error("Error generating cards:", error);
+      alert("Failed to generate cards. Please try again.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -127,7 +255,9 @@ export default function RegistrationPage() {
                       ? "Team Members"
                       : index === 2
                       ? "Project Focus"
-                      : "Confirm"}
+                      : index === 3
+                      ? "Confirm"
+                      : "Cards"}
                   </span>
                 </div>
               ))}
@@ -163,6 +293,10 @@ export default function RegistrationPage() {
                       <Input
                         id="teamName"
                         placeholder="Enter your team name"
+                        value={formData.teamName}
+                        onChange={(e) =>
+                          updateFormData("teamName", e.target.value)
+                        }
                         className="border-gray-200 focus:border-blue-500 focus:ring-blue-500 rounded-xl px-4 py-3 shadow-sm"
                       />
                     </div>
@@ -178,6 +312,10 @@ export default function RegistrationPage() {
                       <Input
                         id="teamLeaderName"
                         placeholder="Enter team leader's full name"
+                        value={formData.teamLeaderName}
+                        onChange={(e) =>
+                          updateFormData("teamLeaderName", e.target.value)
+                        }
                         className="border-gray-200 focus:border-blue-500 focus:ring-blue-500 rounded-xl px-4 py-3 shadow-sm"
                       />
                     </div>
@@ -279,6 +417,14 @@ export default function RegistrationPage() {
                             <Input
                               id={`member${index + 1}Name`}
                               placeholder="First name"
+                              value={formData.members[index]?.firstName || ""}
+                              onChange={(e) =>
+                                updateMemberData(
+                                  index,
+                                  "firstName",
+                                  e.target.value
+                                )
+                              }
                               className="border-gray-200 focus:border-blue-500 focus:ring-blue-500 rounded-xl px-4 py-3 shadow-sm"
                             />
                           </div>
@@ -293,6 +439,14 @@ export default function RegistrationPage() {
                             <Input
                               id={`member${index + 1}LastName`}
                               placeholder="Last name"
+                              value={formData.members[index]?.lastName || ""}
+                              onChange={(e) =>
+                                updateMemberData(
+                                  index,
+                                  "lastName",
+                                  e.target.value
+                                )
+                              }
                               className="border-gray-200 focus:border-blue-500 focus:ring-blue-500 rounded-xl px-4 py-3 shadow-sm"
                             />
                           </div>
@@ -307,6 +461,10 @@ export default function RegistrationPage() {
                               id={`member${index + 1}Email`}
                               type="email"
                               placeholder="member@example.com"
+                              value={formData.members[index]?.email || ""}
+                              onChange={(e) =>
+                                updateMemberData(index, "email", e.target.value)
+                              }
                               className="border-gray-200 focus:border-blue-500 focus:ring-blue-500 rounded-xl px-4 py-3 shadow-sm"
                             />
                           </div>
@@ -325,6 +483,14 @@ export default function RegistrationPage() {
                               <Input
                                 id={`member${index + 1}Phone`}
                                 placeholder="10-digit phone number"
+                                value={formData.members[index]?.phone || ""}
+                                onChange={(e) =>
+                                  updateMemberData(
+                                    index,
+                                    "phone",
+                                    e.target.value
+                                  )
+                                }
                                 className="border-0 rounded-none focus:ring-0 py-3"
                               />
                             </div>
@@ -497,6 +663,49 @@ export default function RegistrationPage() {
                       </h3>
                     </div>
                     <div className="pl-13 ml-3 border-l-2 border-blue-100">
+                      <div className="mb-4 p-3 bg-green-50 rounded-lg border border-green-100">
+                        <h4 className="font-medium text-green-800 mb-2">
+                          Team Info:
+                        </h4>
+                        <p className="text-sm text-green-700">
+                          <strong>Team:</strong>{" "}
+                          {formData.teamName || "Not filled"}
+                          <br />
+                          <strong>Leader:</strong>{" "}
+                          {formData.teamLeaderName || "Not filled"} (No card
+                          will be generated)
+                          <br />
+                          <strong>Members:</strong> {memberCount} total
+                        </p>
+                      </div>
+                      <div className="mb-4 p-3 bg-purple-50 rounded-lg border border-purple-100">
+                        <h4 className="font-medium text-purple-800 mb-2">
+                          Team Members (Cards will be generated for these):
+                        </h4>
+                        {formData.members
+                          .slice(0, memberCount)
+                          .map((member, idx) => (
+                            <div
+                              key={idx}
+                              className="text-sm text-purple-700 mb-1"
+                            >
+                              <strong>Member {idx + 1}:</strong>{" "}
+                              {member.firstName} {member.lastName}
+                              {(!member.firstName || !member.lastName) && (
+                                <span className="text-red-500">
+                                  {" "}
+                                  (Incomplete - No card will be generated)
+                                </span>
+                              )}
+                              {member.firstName && member.lastName && (
+                                <span className="text-green-600">
+                                  {" "}
+                                  ✓ Card will be generated
+                                </span>
+                              )}
+                            </div>
+                          ))}
+                      </div>
                       <p className="text-sm text-gray-600 mb-3">
                         Please review your information before submitting. You
                         can go back to edit any section if needed.
@@ -518,6 +727,10 @@ export default function RegistrationPage() {
                   <div className="flex items-start space-x-3">
                     <Checkbox
                       id="terms"
+                      checked={formData.termsAccepted}
+                      onCheckedChange={(checked) =>
+                        updateFormData("termsAccepted", !!checked)
+                      }
                       className="mt-1 rounded-md h-5 w-5 border-gray-300 text-blue-600 focus:ring-blue-500"
                     />
                     <div className="grid gap-1.5 leading-none">
@@ -537,80 +750,160 @@ export default function RegistrationPage() {
                 </div>
               )}
 
-              {/* Navigation buttons */}
-              <div className="flex justify-between mt-10 pt-6 border-t border-gray-100">
-                {currentStep > 1 ? (
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={prevStep}
-                    className="flex items-center hover:bg-blue-50 hover:text-blue-600 transition-all duration-300 px-6"
-                  >
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      width="16"
-                      height="16"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      className="mr-2"
-                    >
-                      <path d="m15 18-6-6 6-6" />
-                    </svg>
-                    <span>Previous Step</span>
-                  </Button>
-                ) : (
-                  <div></div>
-                )}
+              {/* Step 5: Generated Cards Display */}
+              {currentStep === 5 && showCards && (
+                <div className="space-y-6 animate-fadeIn">
+                  <h2 className="text-2xl font-semibold text-gray-800 mb-6 flex items-center">
+                    <span className="w-10 h-10 rounded-full bg-gradient-to-r from-green-500 to-emerald-600 text-white inline-flex items-center justify-center mr-3 shadow-md">
+                      ✓
+                    </span>
+                    Registration Complete! Your Cards are Ready
+                  </h2>
 
-                {currentStep < totalSteps ? (
-                  <Button
-                    type="button"
-                    onClick={nextStep}
-                    className="flex items-center bg-gradient-to-r from-blue-600 to-violet-600 hover:from-blue-700 hover:to-violet-700 shadow-md hover:shadow-xl transition-all duration-300 px-6 group"
-                  >
-                    <span>Continue to Next Step</span>
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      width="16"
-                      height="16"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      className="ml-2 group-hover:translate-x-1 transition-transform duration-300"
+                  <div className="text-center mb-6">
+                    <p className="text-gray-600 mb-4">
+                      Congratulations! Your team has been registered
+                      successfully. Here are your personalized hackathon cards:
+                    </p>
+                    <Button
+                      onClick={downloadAllCards}
+                      className="bg-gradient-to-r from-blue-600 to-violet-600 hover:from-blue-700 hover:to-violet-700 shadow-md px-8 py-3"
                     >
-                      <path d="m9 18 6-6-6-6" />
-                    </svg>
-                  </Button>
-                ) : (
-                  <Button
-                    type="submit"
-                    className="flex items-center bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 shadow-md hover:shadow-xl transition-all duration-300 px-6 py-6 text-lg font-medium group"
-                  >
-                    <span>Submit Registration</span>
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      width="20"
-                      height="20"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      className="ml-2 group-hover:translate-x-1 transition-transform duration-300"
+                      Download All Cards
+                    </Button>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {generatedCards.map(({ member, cardDataURL }, index) => (
+                      <div
+                        key={index}
+                        className="bg-white rounded-2xl p-6 shadow-lg border border-gray-200"
+                      >
+                        <h3 className="font-semibold text-lg text-gray-800 mb-4 text-center">
+                          {member.firstName} {member.lastName}
+                        </h3>
+                        <div className="aspect-square rounded-lg overflow-hidden mb-4">
+                          <img
+                            src={cardDataURL}
+                            alt={`Card for ${member.firstName} ${member.lastName}`}
+                            className="w-full h-full object-cover"
+                          />
+                        </div>
+                        <Button
+                          onClick={() =>
+                            downloadCard(
+                              cardDataURL,
+                              `${member.firstName}_${member.lastName}_hackathon_card.png`
+                            )
+                          }
+                          variant="outline"
+                          className="w-full"
+                        >
+                          Download {member.firstName}&apos;s Card
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="text-center mt-8">
+                    <Button
+                      onClick={() => router.push("/")}
+                      variant="outline"
+                      className="px-8"
                     >
-                      <path d="M5 12h14M12 5l7 7-7 7" />
-                    </svg>
-                  </Button>
-                )}
-              </div>
+                      Back to Home
+                    </Button>
+                  </div>
+                </div>
+              )}
+
+              {/* Navigation buttons */}
+              {currentStep < 5 && (
+                <div className="flex justify-between mt-10 pt-6 border-t border-gray-100">
+                  {currentStep > 1 ? (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={prevStep}
+                      className="flex items-center hover:bg-blue-50 hover:text-blue-600 transition-all duration-300 px-6"
+                    >
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        width="16"
+                        height="16"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        className="mr-2"
+                      >
+                        <path d="m15 18-6-6 6-6" />
+                      </svg>
+                      <span>Previous Step</span>
+                    </Button>
+                  ) : (
+                    <div></div>
+                  )}
+
+                  {currentStep < 4 ? (
+                    <Button
+                      type="button"
+                      onClick={nextStep}
+                      className="flex items-center bg-gradient-to-r from-blue-600 to-violet-600 hover:from-blue-700 hover:to-violet-700 shadow-md hover:shadow-xl transition-all duration-300 px-6 group"
+                    >
+                      <span>Continue to Next Step</span>
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        width="16"
+                        height="16"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        className="ml-2 group-hover:translate-x-1 transition-transform duration-300"
+                      >
+                        <path d="m9 18 6-6-6-6" />
+                      </svg>
+                    </Button>
+                  ) : (
+                    <Button
+                      type="button"
+                      onClick={handleFinalSubmit}
+                      disabled={isSubmitting}
+                      className="flex items-center bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 shadow-md hover:shadow-xl transition-all duration-300 px-6 py-6 text-lg font-medium group"
+                    >
+                      {isSubmitting ? (
+                        <>
+                          <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2" />
+                          <span>Generating Cards...</span>
+                        </>
+                      ) : (
+                        <>
+                          <span>Submit Registration</span>
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            width="20"
+                            height="20"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            className="ml-2 group-hover:translate-x-1 transition-transform duration-300"
+                          >
+                            <path d="M5 12h14M12 5l7 7-7 7" />
+                          </svg>
+                        </>
+                      )}
+                    </Button>
+                  )}
+                </div>
+              )}
             </form>
           </div>
 
